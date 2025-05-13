@@ -1,0 +1,22 @@
+
+MF:
+{'k': 300, 'max_iter': 10, 'learning_rate': 0.01, 'lambda_reg': 0.01, 'use_bias': False, 'name': 'MF'}
+
+BPR:
+{'k': 475, 'max_iter': 500, 'learning_rate': 0.07, 'lambda_reg': 0.095, 'use_bias': True, 'name': 'BPR'}
+
+EASE:
+{'name': 'EASE', 'lamb': 500, 'posB': False}
+
+WMF:
+{'name': 'WMF', 'k': 300, 'lambda_u': 0.001, 'lambda_v': 0.001, 'a': 1, 'b': 0.01, 'learning_rate': 0.001, 'max_iter': 20}
+{'name': 'WMF', 'k': 300, 'lambda_u': 0.001, 'lambda_v': 0.001, 'a': 10, 'b': 0.01, 'learning_rate': 0.001, 'max_iter': 15}
+{'name': 'WMF', 'k': 300, 'lambda_u': 0.001, 'lambda_v': 0.001, 'a': 10, 'b': 0.1, 'learning_rate': 0.001, 'max_iter': 20}
+
+[
+    Discrete(name='k', values=[100, 200, 300]),
+    Discrete(name='a', values=[1, 10, 30]),
+    Discrete(name='b', values=[0.01, 0.1, 1]),
+    Discrete(name='lambda_u', values=[0.001, 0.01]),
+    Discrete(name='lambda_v', values=[0.001, 0.01]),
+]
