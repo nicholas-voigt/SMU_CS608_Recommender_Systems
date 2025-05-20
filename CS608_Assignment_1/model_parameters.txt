@@ -3,20 +3,14 @@ MF:
 {'k': 300, 'max_iter': 10, 'learning_rate': 0.01, 'lambda_reg': 0.01, 'use_bias': False, 'name': 'MF'}
 
 BPR:
-{'k': 475, 'max_iter': 500, 'learning_rate': 0.07, 'lambda_reg': 0.095, 'use_bias': True, 'name': 'BPR'}
+BPR(k=128, max_iter=512, learning_rate=0.05, lambda_reg=0.1, use_bias=False, verbose=VERBOSE, name=f"BPR_512")
+--model BPR --params k:128,max_iter:512,learning_rate:0.05,lambda_reg:0.1,use_bias:False,name:BPR --eval_params threshold:4.0
 
 EASE:
 {'name': 'EASE', 'lamb': 500, 'posB': False}
+--model EASE --params lamb:7000,posB:True,verbose:True,name:EASE --eval_params threshold:4.0
 
 WMF:
 {'name': 'WMF', 'k': 300, 'lambda_u': 0.001, 'lambda_v': 0.001, 'a': 1, 'b': 0.01, 'learning_rate': 0.001, 'max_iter': 20}
-{'name': 'WMF', 'k': 300, 'lambda_u': 0.001, 'lambda_v': 0.001, 'a': 10, 'b': 0.01, 'learning_rate': 0.001, 'max_iter': 15}
-{'name': 'WMF', 'k': 300, 'lambda_u': 0.001, 'lambda_v': 0.001, 'a': 10, 'b': 0.1, 'learning_rate': 0.001, 'max_iter': 20}
-
-[
-    Discrete(name='k', values=[100, 200, 300]),
-    Discrete(name='a', values=[1, 10, 30]),
-    Discrete(name='b', values=[0.01, 0.1, 1]),
-    Discrete(name='lambda_u', values=[0.001, 0.01]),
-    Discrete(name='lambda_v', values=[0.001, 0.01]),
-]
+WMF(name='WMF_80', k=100, lambda_u=0.1, lambda_v=0.001, a=1, b=0.01, learning_rate=0.001, max_iter=80, verbose=True)
+--model WMF --params k:100,max_iter:80,lambda_u:0.1,lambda_v:0.001,a:1,b:0.01,learning_rate:0.001,name:WMF --eval_params threshold:4.0

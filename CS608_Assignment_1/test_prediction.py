@@ -1,10 +1,30 @@
 # Importing necessary libraries
 import cornac
-from cornac.models import MF, BPR
+from cornac.models import MF, PMF, BPR, WMF, MMMF, EASE
+import argparse
 
-# load model from file
-model = BPR.load("CS608_Assignment_1/models/BPR/2025-05-11_05-48-16-657191.pkl")
+
+# Setting up the command line argument parser
+parser = argparse.ArgumentParser(description="Perform prediction.")
+parser.add_argument('--modelname', type=str, required=True, help='Model name (MF, PMF, BPR, WMF, EASE)')
+parser.add_argument('--modelpath', type=str, required=True, help='Path to the model file')
+args = parser.parse_args()
+# Load the model based on the provided model name
+if args.modelname == 'MF':
+    model = MF.load(args.modelpath)
+elif args.modelname == 'PMF':
+    model = PMF.load(args.modelpath)
+elif args.modelname == 'BPR':
+    model = BPR.load(args.modelpath)
+elif args.modelname == 'WMF':       
+    model = WMF.load(args.modelpath)
+elif args.modelname == 'EASE':
+    model = EASE.load(args.modelpath)
+else:
+    raise ValueError(f"Model {args.modelname} is not supported.")
+
 print("Model loaded successfully.")
+print("Performing prediction...")
 
 # make recommendations for each user and write them to file
 recommendations = []

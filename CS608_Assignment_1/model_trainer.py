@@ -10,6 +10,64 @@ from cornac.experiment import Experiment
 import pandas as pd
 import numpy as np
 import ast
+import argparse
+import regex
+
+# Evaluate input arguments
+def evaluate_input(args):
+    """
+    Evaluate the input arguments for the model and parameters.
+    Args:
+        args: parsed command line arguments.
+    Returns:
+        model_name (str): The name of the model to be used.
+        param_dict (dict): A dictionary of parameters for the model.
+    """
+    # Validate model name
+    valid_models = ['MF', 'PMF', 'BPR', 'WMF', 'MMMF', 'EASE']
+    if args.model not in valid_models:
+        raise ValueError(f"Model {args.model} is not supported. Choose from {valid_models}.")
+    # Validate params argument
+    if not args.params:
+        raise ValueError("Parameters must be provided as a string.")
+    # Extract parameters from the string
+    r = regex.compile(r"(\w+):([\w.]+)")
+    params = regex.findall(r, args.params)
+    param_dict = {}
+    # Convert model parameters to a dictionary & validate their types
+    for param in params:
+        if len(param) != 2:
+            raise ValueError(f"Invalid parameter format: {param}. Expected format is 'key:value'.")
+        key, value = param
+        # Convert value to appropriate type
+        if value.isdigit():
+            value = int(value)
+        elif value.replace('.', '', 1).isdigit():
+            value = float(value)
+        elif value.lower() == 'true' or value.lower() == 'false':
+            value = bool(value)
+        param_dict[key] = value
+    # Validate eval_params argument
+    eval_dict = {}
+    if args.eval_params:
+        # Extract training parameters from the string
+        r = regex.compile(r"(\w+):([\w.]+)")
+        eval_params = regex.findall(r, args.eval_params)
+        # Convert training parameters to a dictionary & validate their types
+        for param in eval_params:
+            if len(param) != 2:
+                raise ValueError(f"Invalid parameter format: {param}. Expected format is 'key:value'.")
+            key, value = param
+            # Convert value to appropriate type
+            if value.isdigit():
+                value = int(value)
+            elif value.replace('.', '', 1).isdigit():
+                value = float(value)
+            elif value.lower() == 'true' or value.lower() == 'false':
+                value = bool(value)
+            eval_dict[key] = value
+    return args.model, param_dict, eval_dict
+
 
 # Loading datasets
 def load_data():
@@ -85,7 +143,7 @@ def perform_experiment(model, eval_method, metrics, verbose=True, save_results=F
         metrics=metrics,
         user_based=True,
         verbose=verbose,
-        save_dir="CS608_Assignment_1/models" if save_results else None,
+        save_dir="models" if save_results else None,
     )
     # Run the experiment
     experiment.run()
@@ -93,31 +151,31 @@ def perform_experiment(model, eval_method, metrics, verbose=True, save_results=F
 
 if __name__ == "__main__":
 
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Train and evaluate a recommendation model.")
+    parser.add_argument('--model', type=str, required=True, help='Model name (MF, PMF, BPR, WMF, MMMF, EASE)')
+    parser.add_argument('--params', type=str, required=True, help='Model parameters as a string (e.g., k:10,max_iter:100')
+    parser.add_argument('--eval_params', type=str, default=None, help='Evaluation parameters as a string (e.g., threshold:1.5)')
+    args = parser.parse_args()
+
+    model_name, param_dict, eval_dict = evaluate_input(args)
+
     # Load the data
     train_data, test_data, full_data = load_data()
 
-    # Get user input for model and parameters
-    model_name = input("Enter the model name (MF, PMF, BPR, WMF, MMMF, EASE): ")
-    parameters_input = input("Enter the model parameters as a dictionary (e.g., {'k': 10, 'max_iter': 100}): ")
-    try:
-        parameters = ast.literal_eval(parameters_input)
-        if not isinstance(parameters, dict):
-            raise ValueError("Input is not a dictionary.")
-    except Exception as e:
-        raise ValueError(f"Invalid input for parameters: {e}")
-
     # Choose the model
-    model = choose_model(model_name, parameters)
-    print(f"Built model: {model}")
+    model = choose_model(model_name, param_dict)
+    print(f"Built model: {model} with parameters: {param_dict}")
 
-    # Hyperparameter tuning (optional)
-    hyperparameter_tuning = input("Do you want to perform hyperparameter tuning? (random/grid/no): ").strip().lower()
+    # Hyperparameter tuning (optional)  // currently not used
+    # hyperparameter_tuning = input("Do you want to perform hyperparameter tuning? (random/grid/no): ").strip().lower()
+    hyperparameter_tuning = 'no'
     if hyperparameter_tuning not in ['random', 'grid']:
         print("No hyperparameter tuning...")
         # evaluation method without validation set
         eval_method = BaseMethod.from_splits(
-            train_data=train_data, test_data=test_data, val_data=None, 
-            fmt='UIR', rating_threshold=4.5, exclude_unknowns=False,
+            train_data=full_data, test_data=test_data, val_data=None, 
+            fmt='UIR', rating_threshold=eval_dict.get('threshold', 2.5), exclude_unknowns=eval_dict.get('exclude_unknowns', False),
             random_state=42
         )
 
@@ -125,19 +183,15 @@ if __name__ == "__main__":
         # Split the data into train, validation, and test sets
         eval_method = RatioSplit(
             data=full_data,
-            test_size=0.2,
-            val_size=0.1,
+            test_size=0.15,
+            val_size=0.15,
             exclude_unknowns=True,
             random_state=42
         )
 
         # Get user input for hyperparameter tuning
         hyperparameters = [
-            Discrete(name='k', values=[100, 200, 300]),
-            Discrete(name='a', values=[1, 10, 30]),
-            Discrete(name='b', values=[0.01, 0.1, 1]),
-            Discrete(name='lambda_u', values=[0.001, 0.01]),
-            Discrete(name='lambda_v', values=[0.001, 0.01])
+            Discrete(name='lamb', values=[1500, 3000]),
             ]
 
         try:
@@ -171,5 +225,5 @@ if __name__ == "__main__":
     metrics = [RMSE(), AUC(), FMeasure(k=50), NCRR(k=50), NDCG(k=50), Recall(k=50)]
     
     # Perform the experiment
-    perform_experiment(model, eval_method, metrics)
+    perform_experiment(model, eval_method, metrics, verbose=True, save_results=True)
     print("Experiment completed successfully.")
